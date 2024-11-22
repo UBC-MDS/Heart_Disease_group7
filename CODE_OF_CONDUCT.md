@@ -54,5 +54,3 @@ Maintainers who fail to act in accordance with this Code of Conduct in good fait
 This Code of Conduct is borrowed from the [tidyverse Code of Conduct](https://github.com/tidyverse/tidyverse.org/blob/master/CODE_OF_CONDUCT.md).
 
 By adhering to these principles, we aim to build a community that is safe, inclusive, and productive for all participants.
-
-
