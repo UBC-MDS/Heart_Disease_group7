@@ -1,4 +1,4 @@
-# TBD_group7
+# Heart_Disease_group7
 
 Authors:
 
@@ -30,8 +30,12 @@ The final report can be found here
 We are using a conda virtual environment so that our computational environment is reproducible.
 
 To replicate our analysis:
-...
+
+* Install Miniconda/Anaconda.
+* Clone the repository.
+* Run conda env create -f environment.yml to create the environment.
+* Activate the environment
+* Run the analysis scripts
 
 ## License
-The code of this project licensed under the terms of the MIT license. If re-using/re-mixing please provide attribution and link to this webpage.
-The project report is under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0) license.
+The code of this project licensed under the terms of the MIT license. 
