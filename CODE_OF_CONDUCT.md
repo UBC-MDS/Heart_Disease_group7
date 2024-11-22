@@ -41,3 +41,18 @@ This Code of Conduct applies to all project spaces and public contexts where ind
 * Engaging in discussions, collaborations, or activities related to the project.
 * Maintainers may further clarify the scope and context of representation as necessary.
 
+## Enforcement
+
+Instances of misconduct, harassment, or other unacceptable behavior can be reported to the project team at tiffany.timbers@stat.ubc.ca. All reports will be reviewed thoroughly, and appropriate action will be taken in alignment with this Code of Conduct. Confidentiality will be maintained to protect reporters’ identities.
+
+Enforcement actions may include warnings, temporary suspension, or permanent exclusion from the project, depending on the severity and nature of the incident.
+
+Maintainers who fail to act in accordance with this Code of Conduct in good faith may face similar consequences, as determined by the project's leadership team.
+
+## Attribution
+
+This Code of Conduct is borrowed from the [tidyverse Code of Conduct](https://github.com/tidyverse/tidyverse.org/blob/master/CODE_OF_CONDUCT.md).
+
+By adhering to these principles, we aim to build a community that is safe, inclusive, and productive for all participants.
+
+
