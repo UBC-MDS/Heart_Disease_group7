@@ -1,0 +1,21 @@
+
+name: heart_disease_classification_environment
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - plotly
+  - scikit-learn
+  - scipy
+  - altair
+  - jupyter
+  - ipykernel
+  - ipython
+  - pip
+  - pip:
+      - altair_ally
