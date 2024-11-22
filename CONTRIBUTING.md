@@ -17,18 +17,26 @@ If it's a new issue, provide the following details:
 
 * Description** of the problem.
 * Steps to reproduce** (if applicable).
-* Expected behavior** and **Actual behavior** (if relevant).
+* Expected behavior** and Actual behavior
 
 ### Submitting Pull Requests
 
-Follow these steps to contribute code:
+* Ensure your branch is up-to-date with the main branch.
+* Push Your Branch
+* Navigate to the repository on GitHub.Click "Compare & pull request" 
+* Set the base branch (e.g., main) and the compare branch (your working branch).
+* Provide a descriptive title and explanation of your changes.
+* Create Pull Request
+* Follow Up by Monitoring for feedback or questions.Push additional changes if requested
 
-1. Fork the repository by clicking the **Fork** button at the top right of this repository page.
-2. Clone the forked repository to your local machine:
-   ```bash
-   git clone https://github.com/your-username/heart-disease-dataset.git
    
 ### Development Workflow
+
+* Clone the repository
+* Install any necessary libraries for data analysis, visualization, or machine learning.
+* The dataset is already pre-processed and ready for classification. Ensure to follow any guidelines provided for cleaning or feature engineering when making changes.
+* Before submitting a pull request, ensure that your changes have been tested, Unit tests for new functions.
+
 
 ### Coding Style Guidelines
 To maintain consistency in the project, please adhere to the following guidelines:
@@ -45,6 +53,14 @@ To maintain consistency in the project, please adhere to the following guideline
 * If you're adding new attributes or modifying existing ones, clearly explain the changes in the dataset description.
 
 ### License
+
 By contributing to this project, you agree that your contributions will be licensed under the MIT License.
 
+### Code of Conduct
+
+We ask all contributors to follow the Code of Conduct when participating in this project.
+
+### Questions?
+
+If you have any questions or need assistance, feel free to open an issue.
    
