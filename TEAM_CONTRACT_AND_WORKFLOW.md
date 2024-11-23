@@ -1,44 +1,13 @@
-### TEAM CONTRACT AND WORKFLOW
+### TEAM CONTRACT
 
-# Roles:
+# Team Members:
 
-1.	Data Processing / EDA (Alex)
-2.	ML Model Tuning and Results (Ethan)
-3.	Reviewer / GitHub Admin (Caroline)
-
-### Proposed Workflow:
-
-Person 1:
-•	Create a branch.
-•	Perform the following tasks in the Jupyter notebook:
-
-* Download the data.
-* Conduct Exploratory Data Analysis (EDA).
-* Perform preprocessing.
-* Prepare the relevant written analysis (as outlined below).
-
-•	Submit a pull request for the reviewer’s approval.
-
-Person 2:
-
-•	Create a branch.
-•	Perform the following tasks in the Jupyter notebook:
-
-•	Develop ML models.
-•	Conduct hyperparameter tuning.
-•	Document the results.
-•	Prepare the relevant written analysis (as outlined below).
-
-•	Submit a pull request for the reviewer’s approval.
-
-Person 3:
-
-•	The reviewer will create a separate branch to work on the GitHub files while the other members work on their tasks.
-•	ensure the workflow runs smoothly, review pull requests (PRs), and manage the repository.
+1. Alex Wong
+2. Ethan Fang
+3. Caroline Kahare
 
 ### Analysis Requirements:
 
-### 	Introduction:
 
 * Provide background information on the topic to help the reader understand the rest of the report. (3)
 * Clearly state the research question addressed by the project. (3)
@@ -66,7 +35,6 @@ Person 3:
 * Discuss the potential impact of these findings. (2)
 * Explore future questions that could arise from this analysis. (2)
 
-### Team Contract
 
 ### Expectations:
 •	Each group member is expected to spend a maximum of 6 hours per week on DSCI 522 unless agreed otherwise by the team.
