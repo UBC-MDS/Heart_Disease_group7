@@ -1,0 +1,16 @@
+
+name: heart_disease
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip=24.3.1
+  - ipykernel=6.29.5
+  - nb_conda_kernels=2.5.1
+  - altair-all=5.5.0
+  - vega_datasets=0.9.0
+  - scipy=1.14.1
+  - scikit-learn=1.5.2
+  - pip:
+    - altair_ally>=0.1.1
