@@ -44,7 +44,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-                - name: Update docker-compose.yml with new image tag
+      - name: Update docker-compose.yml with new image tag
         if: success()
         run: |
           sed -i "s|image:  awong18/heart_disease_group7:.*|image:  awong18/heart_disease_group7:${{ steps.meta.outputs.version }}|" docker-compose.yml
