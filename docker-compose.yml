@@ -1,0 +1,12 @@
+  services:
+    jupyter-notebook:
+      image: awong18/heart_disease_group7:bd860c5
+      ports:
+        - "8888:8888"
+      volumes:
+        - .:/home/jovyan
+      deploy:
+        resources:
+          limits:
+            memory: 5G
+      platform: linux/amd64
