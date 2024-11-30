@@ -24,7 +24,7 @@ This project aims to develop a reliable classification model for heart disease p
 
 ## Report
 
-The final report can be found [here](analysis.ipynb)
+The final report can be found [here](docs/final_report.html)
 
 ## Dependencies
 
