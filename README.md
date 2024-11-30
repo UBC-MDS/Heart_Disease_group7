@@ -26,6 +26,14 @@ This project aims to develop a reliable classification model for heart disease p
 
 The final report can be found [here](docs/final_report.html)
 
+## Dependencies
+
+-   [Docker](https://www.docker.com/)
+
+-   [VS Code](https://code.visualstudio.com/download)
+
+-   [VS Code Jupyter Extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
+
 ## Usage
 
 We are using a conda virtual environment so that our computational environment is reproducible.
@@ -37,6 +45,17 @@ To replicate our analysis:
 -   Run conda env create -f environment.yml to create the environment.
 -   Activate the environment
 -   Run the analysis scripts
+
+### Setup
+
+-   Clone the repository.
+-   In the terminal, look for a URL that starts with `http://127.0.0.1:8888/lab?token=`. Copy and paste that URL into your browser.
+-   Navigate to the root of this project on your computer using the command line and enter 'docker compose up'
+-   To run the analysis, open `analysis.ipynb` in Jupyter Lab you just launched and under the "Kernel" menu click "Restart Kernel and Run All Cells...".
+
+### Clean up
+
+-   To shut down the container and clean up the resources, type `Cntrl` + `C` in the terminal where you launched the container, and then type `docker compose rm`To shut down the container and clean up the resources, type `Cntrl` + `C` in the terminal where you launched the container, and then type `docker compose rm`
 
 ## Developer notes
 
