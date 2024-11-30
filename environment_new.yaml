@@ -11,7 +11,8 @@ dependencies:
   - altair-all=5.5.0
   - vega_datasets=0.9.0
   - scipy=1.14.1
-  - scikit-learn=1.5.2
+  - scikit-learn=1.2.2
   - pandera=0.20.4
   - pip:
     - altair_ally>=0.1.1
+    - pip install deepchecks==0.18.1
