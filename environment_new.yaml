@@ -15,4 +15,3 @@ dependencies:
   - pandera=0.20.4
   - pip:
     - altair_ally>=0.1.1
-    - pip install deepchecks==0.18.1
