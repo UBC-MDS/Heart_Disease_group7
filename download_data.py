@@ -10,11 +10,11 @@ def combine_files(output_file):
     ]
     columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
                'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']
-    
+
     dataframes = [pd.read_csv(fp, index_col=False, names=columns) for fp in file_paths]
     combined_df = pd.concat(dataframes, ignore_index=True)
     combined_df.to_csv(output_file, index=False)
     print(f"Combined data saved to {output_file}")
 
 if __name__ == '__main__':
-    combine_files('combined_df.csv')
+    combine_files('data/combined_df.csv')
