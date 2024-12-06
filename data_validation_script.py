@@ -7,16 +7,21 @@ from deepchecks.tabular.checks import FeatureLabelCorrelation, FeatureFeatureCor
 
 @click.command()
 @click.option('--input', type=str)
-@click.option('--output', type=str)
 
+def main(input): 
 
-def main(input, output): 
-
-    combined_df = pd.read_csv(input)
+    file_path_hungarian = 'data/processed.hungarian.data'
+    file_path_switzerland = 'data/processed.switzerland.data'
+    file_path_cleveland = 'data/processed.cleveland.data'
+    file_path_va = 'data/processed.va.data'
+    columns = ['age','sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']
     
+    combined_df = pd.read_csv(input)
+
     ## --- 1. Correct data file format
 
     file_path = [file_path_hungarian, file_path_switzerland, file_path_cleveland, file_path_va]
+
     if False in [path.endswith('.data') for path in file_path]:
         print("Warning: The file extension is not .data")
     else:
@@ -43,10 +48,6 @@ def main(input, output):
         print("No missing row found.")
     except pa.errors.SchemaError as a:
         print(f"Warning: There are {combined_df.isna().sum().sum()} missing values in dataset.")
-
-    # call main function 
-    if __name__ == "__main__":
-        main() # pass any command line args to main here
 
     ## --- 4. Missingness not beyond expected threshold
     #The script checks each column in combined_df to see if the proportion of missing values exceeds 5%. If it does, a warning is printed. Otherwise, it confirms that the column's missing values are within acceptable limits.
@@ -109,22 +110,24 @@ def main(input, output):
     #It performs this validation after converting the values in combined_df to float (if not NaN) to facilitate numeric checks.
 
     values_schema = pa.DataFrameSchema({
-        "age": pa.Column(float, pa.Check.between(0, 120), nullable=True),
+        "age": pa.Column(int, pa.Check.between(0, 120), nullable=True),
         "sex": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), 
         "cp": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0, 4.0]), nullable=True), 
         "trestbps": pa.Column(float, pa.Check.between(20, 220), nullable=True),
-        "chol": pa.Column(float, pa.Check.between(50, 800), nullable=True), 
+        "chol": pa.Column(float, pa.Check.between(0, 800), nullable=True), 
         "fbs": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), 
         "restecg": pa.Column(float, pa.Check.isin([0.0, 1.0, 2.0]), nullable=True),  
         "thalach": pa.Column(float, pa.Check.between(50, 240), nullable=True),  
         "exang":  pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True),  
-        "oldpeak": pa.Column(float, pa.Check.between(0.0, 7.0), nullable=True),  
+        "oldpeak": pa.Column(float, pa.Check.between(0.0, 250.0), nullable=True),  
         "slope": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0]), nullable=True),  
         "ca": pa.Column(float, pa.Check.between(0, 4), nullable=True), 
         "thal": pa.Column(float, pa.Check.isin([3.0, 6.0, 7.0]), nullable=True),  
         "label": pa.Column(float, pa.Check.between(0.0, 4.0), nullable=True),  
     })
+
     replicate_df = combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x)
+
     try:
         values_schema.validate(replicate_df, lazy = True)
         print("No outlier or anomalous value found.")
@@ -133,6 +136,7 @@ def main(input, output):
     
     ## --- 9. Target/response variable follows expected distribution
     #This check is useful for understanding the distribution of the target variable (label
+
     proportions = combined_df.label.value_counts(normalize=True)
     print("Class proportions are", proportions)
     print("Class proportions are as expected.")
@@ -162,6 +166,7 @@ def main(input, output):
         raise ValueError("The correlation between features variables exceeds the threshold.")
     else:
         print("Everything is fine.")
+
 
 # call main function 
 if __name__ == "__main__":
