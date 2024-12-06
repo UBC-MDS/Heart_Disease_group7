@@ -12,11 +12,11 @@ import pickle
 @click.option('--output-folder', default='output', help='Path to the folder for saving output files.')
 def preprocess(data_folder, output_folder):
     """Preprocess the train and test datasets and save the results."""
-    # Input file paths
+    # we define our input file paths
     train_file = os.path.join(data_folder, 'train_df.csv')
     test_file = os.path.join(data_folder, 'test_df.csv')
 
-    # Output file paths
+    # we define our output file paths
     os.makedirs(output_folder, exist_ok=True)
     preprocessor_file = os.path.join(output_folder, 'preprocessor.pkl')
     processed_train_file = os.path.join(output_folder, 'processed_X_train.csv')
@@ -26,21 +26,21 @@ def preprocess(data_folder, output_folder):
     y_train_file = os.path.join(output_folder, 'y_train.csv')
     y_test_file = os.path.join(output_folder, 'y_test.csv')
 
-    # Load data
+    # loading out data
     train_df = pd.read_csv(train_file)
     test_df = pd.read_csv(test_file)
 
-    # Separate features and labels
+    # Separating our features and labels
     X_train = train_df.drop(columns=["label"])
     X_test = test_df.drop(columns=["label"])
     y_train = train_df["label"]
     y_test = test_df["label"]
 
-    # Save y_train and y_test
+    # We proceed to save y_train and y_test
     y_train.to_csv(y_train_file, index=False)
     y_test.to_csv(y_test_file, index=False)
 
-    # Define feature groups
+    # We then move to the next step and define feature groups
     numeric_features = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak']
     categorical_features = ['cp', 'restecg']
     binary_features = ['sex', 'exang', 'fbs']
@@ -57,7 +57,7 @@ def preprocess(data_folder, output_folder):
     )
     binary_transformer = SimpleImputer(strategy='most_frequent')
 
-    # Combine into a column transformer
+    # We combine into a column transformer
     preprocessor = make_column_transformer(
         (numeric_transformer_pipe, numeric_features),
         (categorical_transformer_pipe, categorical_features),
@@ -80,7 +80,7 @@ def preprocess(data_folder, output_folder):
     X_train_transformed = pd.DataFrame(X_train_transformed, columns=col_names)
     X_test_transformed = pd.DataFrame(X_test_transformed, columns=col_names)
 
-    # Save the processed data
+    # Saving of the processed data
     X_train_transformed.to_csv(processed_train_file, index=False)
     X_test_transformed.to_csv(processed_test_file, index=False)
     X_train.to_csv(x_train_file, index=False)
