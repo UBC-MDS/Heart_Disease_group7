@@ -13,5 +13,3 @@ dependencies:
   - scipy=1.14.1
   - scikit-learn=1.2.2
   - pandera=0.20.4
-  - pip:
-    - altair_ally>=0.1.1
