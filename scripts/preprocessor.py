@@ -72,7 +72,7 @@ def preprocess(data_folder, output_folder):
     # Get transformed column names
     col_names = (
         numeric_features +
-        preprocessor.named_transformers_['pipeline-1'].get_feature_names_out().tolist() + 
+        preprocessor.named_transformers_['pipeline-2'].get_feature_names_out().tolist() + 
         binary_features
     )
 

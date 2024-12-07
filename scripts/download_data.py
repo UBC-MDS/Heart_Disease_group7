@@ -3,10 +3,10 @@ import click
 
 def combine_files(output_file):
     file_paths = [
-        'data/processed.hungarian.data',
-        'data/processed.switzerland.data',
-        'data/processed.cleveland.data',
-        'data/processed.va.data'
+        '../data/processed.hungarian.data',
+        '../data/processed.switzerland.data',
+        '../data/processed.cleveland.data',
+        '../data/processed.va.data'
     ]
     columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
                'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']
@@ -22,4 +22,4 @@ def combine_files(output_file):
     print(f"Combined data saved to {output_file}")
 
 if __name__ == '__main__':
-    combine_files('data/combined_df.csv')
+    combine_files('../data/combined_df.csv')
