@@ -1,0 +1,568 @@
+---
+title: "Predicting the presence of heart disease with key health metrics and attributes"
+author: "Ziming(Ethan) Fang, Lik Hang(Alex) Wong, Caroline Kahare"
+format:
+  html: 
+    toc: true
+    toc-title: "Contents"
+    number-sections: true
+    code-fold: true
+    code-summary: "Show Code"
+bibliography: references.bib
+execute: 
+  echo: false
+  warning: false
+  message: false
+editor: source
+output-dir: docs
+---
+
+
+by Ethan Fang, Caroline Kahare and Alex Wong
+
+
+# Introduction 
+
+The objective of this project is to build a classification model that predicts the presence of heart disease based on key health metrics and attributes. It aims to contribute to the understanding and early detection of heart disease, which is crucial for effective medical intervention and prevention. 
+
+# Methods
+
+## Data 
+
+The dataset is created by R. Detrano, A. Jánosi, W. Steinbrunn, M. Pfisterer, J. Schmid, S. Sandhu, K. Guppy, S. Lee, V. Froelicher and was sourced from UC Irvine's Machine Learning Repository. The original dataset consists of 920 observation and 76 attributes, however only 13 attributes were used for the project. The target variable, label, indicates the presence or absence of heart disease, with values ranging from 0 (no presence) to 4 (indicating varying levels of severity). The dataset also contains demographic, clinical, and diagnostic attributes, offering a comprehensive view of patient health metrics.
+
+Key features of the dataset include demographic indicators such as age (age in years) and sex (gender: 1 = male, 0 = female). Clinical measurements include trestbps (resting blood pressure), chol (serum cholesterol levels), thalach (maximum heart rate achieved), and oldpeak (ST depression induced by exercise). Additionally, categorical variables such as cp (chest pain type), fbs (fasting blood sugar > 120 mg/dl), restecg (resting electrocardiographic results), exang (exercise-induced angina), slope (slope of the peak exercise ST segment), ca (number of major vessels colored by fluoroscopy), and thal (heart imaging defects) provide valuable context for predicting heart disease. 
+
+
+1. **age**: Age in years  
+2. **sex**: Sex  
+   - `1` = Male  
+   - `0` = Female  
+3. **cp**: Chest pain type  
+   - Value `1`: Typical angina  
+   - Value `2`: Atypical angina  
+   - Value `3`: Non-anginal pain  
+   - Value `4`: Asymptomatic  
+4. **trestbps**: Resting blood pressure (in mm Hg on admission to the hospital)  
+5. **chol**: Serum cholesterol in mg/dl  
+6. **fbs**: Fasting blood sugar (> 120 mg/dl)  
+   - `1` = True  
+   - `0` = False  
+7. **restecg**: Resting electrocardiographic results  
+   - Value `0`: Normal  
+   - Value `1`: Having ST-T wave abnormality (T wave inversions and/or ST  
+     elevation or depression of > 0.05 mV)  
+   - Value `2`: Showing probable or definite left ventricular hypertrophy by  
+     Estes' criteria  
+8. **thalach**: Maximum heart rate achieved  
+9. **exang**: Exercise-induced angina  
+   - `1` = Yes  
+   - `0` = No  
+10. **oldpeak**: ST depression induced by exercise relative to rest  
+11. **slope**: The slope of the peak exercise ST segment  
+    - Value `1`: Upsloping  
+    - Value `2`: Flat  
+    - Value `3`: Downsloping  
+12. **ca**: Number of major vessels (0-3) colored by fluoroscopy  
+13. **thal**:  
+    - `3` = Normal  
+    - `6` = Fixed defect  
+    - `7` = Reversible defect
+14. **label**: 
+    - `0` = Absence 
+    - `1` = Presence 
+    - `2` = Presence
+    - `3` = Presence
+    - `4` = Presence
+
+```{python}
+# pip install deepchecks==0.18.1
+```
+
+```{python}
+import numpy as np
+import pandas as pd
+import altair_ally as aly
+import altair as alt
+import pandera as pa
+from scipy import stats
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import make_column_transformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
+from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import make_scorer, roc_auc_score
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from deepchecks.tabular import Dataset
+from deepchecks.tabular.checks import FeatureLabelCorrelation, FeatureFeatureCorrelation
+```
+
+```{python}
+columns = ['age','sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']
+```
+
+```{python}
+#The script below aims at unifying multiple sources and handling inconsistencies in the datasets
+
+file_path_hungarian = 'data/processed.hungarian.data'
+file_path_switzerland = 'data/processed.switzerland.data'
+file_path_cleveland = 'data/processed.cleveland.data'
+file_path_va = 'data/processed.va.data'
+hungary_df = pd.read_csv(file_path_hungarian,index_col=False, names = columns)
+swiss_df = pd.read_csv(file_path_switzerland,index_col=False, names = columns)
+cleveland_df = pd.read_csv(file_path_cleveland,index_col=False, names = columns)
+va_df = pd.read_csv(file_path_va,index_col=False, names = columns)
+```
+
+## Data Cleaning
+
+```{python}
+#| label: combined_dataframe
+#| tbl-cap: "Combined Data Frame"
+
+# Combine the four dataset into one consolidated set 
+combined_df = pd.concat([hungary_df, swiss_df, cleveland_df, va_df], axis = 0)
+combined_df.replace("?", np.nan, inplace = True)
+combined_df
+```
+
+```{python}
+## delete duplicated rows
+#This process ensures the data is clean, well-formatted, and appropriate for analysis or modeling.
+duplicate_index = [102,187]
+combined_df = combined_df.drop(index=duplicate_index).reset_index(drop=True)
+combined_df
+
+# Casting continuous features to float64 instead of categories 
+combined_df['trestbps'] = combined_df['trestbps'].astype('float64')
+combined_df['chol'] = combined_df['chol'].astype('float64')
+combined_df['thalach'] = combined_df['thalach'].astype('float64')
+combined_df['oldpeak'] = combined_df['thalach'].astype('float64')
+
+# Casting label as categorical 
+combined_df['label'] = combined_df['label'].astype('category')
+
+# Casting as categorical 
+combined_df['cp'] = combined_df['cp'].astype('category')
+combined_df['sex'] = combined_df['sex'].astype('category')
+
+# For the following features, have to first convert dtype to number first to ensure the category labels
+# are not affected by decimals (i.e. 1.0 and 1 are not treated as different groups)
+combined_df['exang'] = pd.to_numeric(combined_df['exang'], errors='coerce').astype('category')
+combined_df['thal'] = pd.to_numeric(combined_df['thal'], errors='coerce').astype('category')
+combined_df['fbs'] = pd.to_numeric(combined_df['fbs'], errors='coerce').astype('category')
+combined_df['ca'] = pd.to_numeric(combined_df['ca'], errors='coerce').astype('category')
+combined_df['slope'] = pd.to_numeric(combined_df['slope'], errors='coerce').astype('category')
+combined_df['restecg'] = pd.to_numeric(combined_df['restecg'], errors='coerce').astype('category')
+```
+
+## Data Validation
+
+```{python}
+#| include: false
+## --- 1. Correct data file format
+
+file_path = [file_path_hungarian, file_path_switzerland, file_path_cleveland, file_path_va]
+if False in [path.endswith('.data') for path in file_path]:
+    print("Warning: The file extension is not .data")
+else:
+    print("File is in the expected format.")
+```
+
+```{python}
+#| include: false
+## --- 2. Correct column names
+#The script ensures that the column names in the combined_df DataFrame match a predefined list of expected column names (
+
+expected_names = set(columns)
+actual_names = set(combined_df.columns)
+if expected_names != actual_names:
+    print(f"Warning: Column names do not match. Expected: {columns}, Found: {combined_df.columns.tolist()}")
+else:
+    print("Column names are correct.")
+```
+
+```{python}
+#| include: false
+## --- 3. No empty observations
+#This script checks whether the files specified by the paths in the list file_path all have the .data file extension
+
+empty_obs_schema = pa.DataFrameSchema(
+    checks = [
+        pa.Check(lambda df: ~(df.isna().all(axis = 1)).any(), error = "Empty rows found.")
+    ]
+)
+try:
+    empty_obs_schema.validate(combined_df)
+    print("No missing row found.")
+except pa.errors.SchemaError as a:
+    print(f"Warning: There are {combined_df.isna().sum().sum()} missing values in dataset.")
+```
+
+```{python}
+#| include: false
+## --- 4. Missingness not beyond expected threshold
+#The script checks each column in combined_df to see if the proportion of missing values exceeds 5%. If it does, a warning is printed. Otherwise, it confirms that the column's missing values are within acceptable limits.
+
+threshold = 0.05
+missing_prop = combined_df.isna().mean()
+for col, prop in missing_prop.items():
+    if prop > threshold:
+        print(f"Warning: There're too many missing values in column '{col}'.")
+    else:
+        print(f"Column '{col}' passed the test of missingness.")
+```
+
+```{python}
+#| include: false
+## --- 5. Correct data types in each column
+#This script uses the pandera library to validate the combined_df DataFrame's columns against a predefined schema (column_type_schema).
+#If the columns match the expected data types, it prints a success message. If any columns don't match the expected types,
+#it prints a warning with details about the mismatch
+
+column_type_schema = pa.DataFrameSchema(
+    {
+        "age": pa.Column(pa.Int, nullable = True),
+        "sex": pa.Column(pa.Int, nullable = True),
+        "cp": pa.Column(pa.String, nullable = True),
+        "trestbps": pa.Column(pa.Int, nullable = True),
+        "chol": pa.Column(pa.Int, nullable = True),
+        "fbs": pa.Column(pa.Int, nullable = True),
+        "restecg": pa.Column(pa.String, nullable = True),
+        "thalach": pa.Column(pa.Int, nullable = True),
+        "exang": pa.Column(pa.String, nullable = True),
+        "oldpeak": pa.Column(pa.Float, nullable = True),
+        "slope": pa.Column(pa.String, nullable = True),
+        "ca": pa.Column(pa.Float, nullable = True),
+        "thal": pa.Column(pa.String, nullable = True),
+        "label": pa.Column(pa.Int, nullable = True)
+    }    
+)
+try:
+    column_type_schema.validate(combined_df)
+    print("All columns have correct data types.")
+except pa.errors.SchemaError as e:
+    print(f"Warning: Validation failed: {e}")
+```
+
+```{python}
+#| include: false
+## --- 6. No duplicate observations
+#This script uses the pandera library to validate the combined_df DataFrame for duplicate rows.
+#If duplicates are found, it raises a warning and displays the duplicate rows. If no duplicates are found, it confirms that there are no duplicates.
+
+duplicate_obs_schema = pa.DataFrameSchema(
+    checks=[
+        pa.Check(lambda df: ~df.duplicated().any(), error="There're duplicate rows")
+    ]
+)
+try:
+    duplicate_obs_schema.validate(combined_df)
+    print("No duplicate rows found.")
+except pa.errors.SchemaError as e:
+    duplicate_rows = combined_df[combined_df.duplicated(keep=False)]
+    print(f"Warning: There're duplicate rows: \n{duplicate_rows}.")
+```
+
+```{python}
+#| include: false
+## --- 7. No outlier or anomalous values
+#This script uses the pandera library to validate the values in the combined_df DataFrame against a defined schema (values_schema) to ensure the values meet specific criteria (e.g., value ranges, membership in predefined sets).
+#It performs this validation after converting the values in combined_df to float (if not NaN) to facilitate numeric checks.
+
+values_schema = pa.DataFrameSchema({
+    "age": pa.Column(float, pa.Check.between(0, 120), nullable=True),
+    "sex": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), 
+    "cp": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0, 4.0]), nullable=True), 
+    "trestbps": pa.Column(float, pa.Check.between(0, 220), nullable=True),
+    "chol": pa.Column(float, pa.Check.between(0, 800), nullable=True), 
+    "fbs": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), 
+    "restecg": pa.Column(float, pa.Check.isin([0.0, 1.0, 2.0]), nullable=True),  
+    "thalach": pa.Column(float, pa.Check.between(50, 240), nullable=True),  
+    "exang":  pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True),  
+    "oldpeak": pa.Column(float, pa.Check.between(0.0, 250), nullable=True),  
+    "slope": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0]), nullable=True),  
+    "ca": pa.Column(float, pa.Check.between(0, 4), nullable=True), 
+    "thal": pa.Column(float, pa.Check.isin([3.0, 6.0, 7.0]), nullable=True),  
+    "label": pa.Column(float, pa.Check.isin([0, 1, 2, 3, 4]), nullable=True),  
+})
+replicate_df = combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x)
+try:
+    values_schema.validate(replicate_df, lazy = True)
+    print("No outlier or anomalous value found.")
+except pa.errors.SchemaErrors as e:
+    print(f"Warning: There're outlier or anomalous values.")
+```
+
+```{python}
+#| include: false
+values_schema.validate(combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x), lazy = True)
+```
+
+```{python}
+#| include: false
+## --- 8. There's no categorical value in this dataframe.
+```
+
+```{python}
+#| include: false
+## --- 9. Target/response variable follows expected distribution
+#This check is useful for understanding the distribution of the target variable (label
+proportions = combined_df.label.value_counts(normalize=True)
+print("Class proportions are", proportions)
+print("Class proportions are as expected.")
+```
+
+```{python}
+#| include: false
+## --- 10. No anomalous correlations between target variable and features variables
+
+categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']
+ds = Dataset(combined_df, label='label', cat_features=categorical_features)
+
+check_feat_lab_corr = FeatureLabelCorrelation().add_condition_feature_pps_less_than(0.9)
+check_feat_lab_corr_result = check_feat_lab_corr.run(dataset=ds)
+check_feat_lab_corr.run(dataset=ds).show()
+if not check_feat_lab_corr_result.passed_conditions():
+    raise ValueError("The correlation between target and features variables exceeds the threshold.")
+else:
+    print("Everything is fine.")
+```
+
+```{python}
+#| include: false
+## --- 11. No anomalous correlations between features variables
+#This code performs a Feature-Feature Correlation check to ensure that there are no anomalous or excessively high correlations
+#(above a threshold of 0.9) between feature variables in a dataset.
+
+check_feat_feat_corr = FeatureFeatureCorrelation(threshold=0.9)
+check_feat_feat_corr_result = check_feat_feat_corr.run(dataset=ds)
+check_feat_feat_corr.run(dataset=ds).show()
+
+if not check_feat_feat_corr_result.passed_conditions():
+    raise ValueError("The correlation between features variables exceeds the threshold.")
+else:
+    print("Everything is fine.")
+```
+
+----------------------------------
+
+## Exploratory data analysis(EDA)
+
+### Key findings
+
+- Patients with no heart disease exhibits on average higher ST depression induced by exercise relative to rest, higher maximum heart rate and lower serum cholestorel. 
+
+- Heart disease is more common among patients over 55. 
+
+- Patients with heart disease are more likely to experience asymptomatic chest pains.
+
+- Males appear to be more susceptible to heart disease. 
+
+- Patients without heart disease tend to have lower fasting blood sugar when compared to the positive group.
+
+```{python}
+train_df, test_df = train_test_split(combined_df, test_size=0.3, random_state=123)
+```
+
+```{python}
+#| label: numerical_chart
+#| fig-cap: "This shows the distribution of numerical variables"
+#| fig-width: 8
+#| fig-height: 4
+
+aly.alt.data_transformers.enable('vegafusion')
+aly.dist(train_df, color='label')
+```
+
+```{python}
+#| label: categorical_chart
+#| fig-cap: "This shows the distribution of categorical variables"
+#| fig-width: 4
+#| fig-height: 15
+
+aly.dist(train_df, dtype = 'category', color = 'label')
+```
+
+## Features pre-processing 
+
+```{python}
+X_train = train_df.drop(columns=["label"])
+X_test = test_df.drop(columns=["label"])
+y_train = train_df["label"]
+y_test = test_df["label"]
+```
+
+```{python}
+numeric_features = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak'] # standard scaling for numerical features
+categorical_features = ['cp', 'restecg'] # onehot encoding for categorical features with > 2 classes
+binary_features = ['sex', 'exang', 'fbs'] # simple imputing on the binary features
+drop_features = ['thal', 'ca', 'slope'] # dropping features with signifcant NaN values 
+```
+
+```{python}
+numeric_transformer_pipe = make_pipeline(SimpleImputer(strategy = 'median'), StandardScaler())
+categorical_transfomer_pipe = make_pipeline(SimpleImputer(strategy = 'most_frequent'), OneHotEncoder(drop = 'if_binary', sparse_output = False)) 
+imputer = SimpleImputer(strategy = 'most_frequent')
+```
+
+```{python}
+preprocessor = make_column_transformer(
+    (numeric_transformer_pipe, numeric_features),
+    (categorical_transfomer_pipe, categorical_features),
+    (imputer, binary_features),
+    ("drop", drop_features)
+)
+```
+
+```{python}
+X_train_transformed = preprocessor.fit_transform(X_train)
+X_test_transformed = preprocessor.fit_transform(X_test)
+```
+
+```{python}
+col_names = ( 
+    numeric_features +
+    preprocessor.named_transformers_['pipeline-2'].get_feature_names_out().tolist() + 
+    binary_features
+)
+```
+
+```{python}
+#| label: x-train-transformed
+#| tbl-cap: "Transformed X Train Data Frame"
+X_train_transformed = pd.DataFrame(X_train_transformed, columns = col_names)
+X_test_transformed = pd.DataFrame(X_test_transformed, columns = col_names)
+X_train_transformed 
+```
+
+## Models and Hyperparameters
+### Summary
+
+- Various machine learning models were tested and optimized using hyperparameter tuning to identify the best-performing model.
+- Randomized Search CV was used to perform hyperparameter optimization for each model. Key parameters tuned include:
+   - Logistic Regression: Regularization strength(C), Solver(liblinear, lbfgs).
+   - Decision Tree: Maximum depth, Minimum samples per split.
+   - SVM: Regularization strength(C), Kernel type(linear, rbf).
+   - KNN: Number of neighbours, Weight type(uniform, distance).
+
+- Results:
+
+    As shown in Text @model_results, KNN performs the best.
+
+### Conclusion
+
+- The K-Nearest Neighbors (KNN) model emerged as the best-performing classifier based on accuracy and weighted F1-score. Despite moderate overall performance, it provided reasonable balance across classes compared to other models.This study demonstrates the potential of leveraging machine learning techniques for predicting heart disease but also highlights the challenges posed by multi-class classification and limited data quality.
+
+```{python}
+#importing libraries
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#pio.templates.default = "plotly_white"
+
+#%matplotlib inline
+
+#Models for scikit learn
+
+#Model Evaluations
+
+```
+
+```{python}
+#The models dictionary holds the classifier objects for different algorithms.
+#The param_distributions dictionary specifies the ranges and values for hyperparameters to be explored during optimization.
+#This setup allows for an efficient search over multiple hyperparameters and algorithms to find the best configuration for the task at hand.
+
+models = {
+    'Logistic Regression': LogisticRegression(random_state = 123, max_iter=1000),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Support Vector Machine': SVC(random_state = 123, probability=True),
+    'K-Nearest Neighbors': KNeighborsClassifier()
+}
+
+param_distributions = {
+    'Logistic Regression': {
+        'classifier__C': stats.loguniform(1e-3, 1e3),
+        'classifier__solver': ['liblinear', 'lbfgs']
+    },
+    'Decision Tree': {
+        'classifier__max_depth': [3, 5, 10],
+        'classifier__min_samples_split': stats.randint(2, 20)
+    },
+    'Support Vector Machine': {
+        'classifier__C': stats.loguniform(1e-2, 1e2),
+        'classifier__kernel': ['linear', 'rbf']
+    },
+    'K-Nearest Neighbors': {
+        'classifier__n_neighbors': stats.randint(3, 20),
+        'classifier__weights': ['uniform', 'distance']
+    }
+}
+```
+
+```{python}
+#| label: model_results
+#| echo: false
+#| output: markdown
+#| caption: "The Results of Models Evaluation"
+
+#RandomizedSearchCV allows for searching over a large hyperparameter space by sampling random values,
+#making it efficient compared to grid search.
+
+#Classification reports and confusion matrices provide insight into model performance,
+#including how well the model distinguishes between classes.
+
+best_models = {}
+
+for model_name, model in models.items():
+    print(f"Tuning hyperparameters for {model_name} using RandomizedSearchCV...")
+    
+    clf = Pipeline(steps=[('classifier', model)])
+    
+    random_search = RandomizedSearchCV(
+        estimator=clf,
+        param_distributions=param_distributions[model_name],
+        scoring=make_scorer(roc_auc_score, needs_proba=True),
+        n_iter=10, 
+        cv=5,
+        random_state=42
+    )
+    
+    random_search.fit(X_train_transformed, y_train)
+    
+    best_models[model_name] = random_search.best_estimator_
+    
+    print(f"Best parameters for {model_name}: {random_search.best_params_}")
+    print("-" * 40)
+
+for model_name, model in best_models.items():
+    print(f"Evaluating {model_name} on test set...")
+    y_pred = model.predict(X_test_transformed)
+    
+    print("Classification Report:")
+    print(classification_report(y_test, y_pred))
+    print("Confusion Matrix:")
+    print(confusion_matrix(y_test, y_pred))
+    print("-" * 40)
+```
+
+# Reference 
+
+```
+{bibliography}
+```
+
+
+
