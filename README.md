@@ -73,7 +73,7 @@ To replicate our analysis:
     quarto render report/Heart_Disease.qmd --to pdf
     ```
 
--   <div>
+    <div>
 
     ### Clean up
 
