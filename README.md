@@ -69,8 +69,8 @@ To replicate our analysis:
 
     python models_and_results.py
 
-    quarto render report/Heart_Disease.qmd --to html
-    quarto render report/Heart_Disease.qmd --to pdf
+    quarto render report/analysis.qmd --to html
+    quarto render report/analysis.qmd --to pdf
     ```
 
     <div>
