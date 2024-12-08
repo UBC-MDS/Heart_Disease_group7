@@ -49,11 +49,35 @@ To replicate our analysis:
 ### Setup
 
 -   Clone the repository.
--   In the terminal, look for a URL that starts with `http://127.0.0.1:8888/lab?token=`. Copy and paste that URL into your browser.
--   Navigate to the root of this project on your computer using the command line and enter 'docker compose up'
--   To run the analysis, open `analysis.ipynb` in Jupyter Lab you just launched and under the "Kernel" menu click "Restart Kernel and Run All Cells...".
 
-### Clean up
+-   Navigate to the root of this project on your computer using the command line and enter 'docker compose up'
+
+-   In the terminal, look for a URL that starts with `http://127.0.0.1:8888/lab?token=`. Copy and paste that URL into your browser.
+
+-   To run the analysis, open a terminal and run the following commands
+
+    ``` python
+    python download_data.py
+
+    python data_cleaning_script.py --input ../data/combined_df.csv --output ../data/combined_df_clean.csv
+
+    python data_validation_script.py --input ../data/combined_df_clean.csv
+
+    python EDA_script.py
+
+    python preprocessor.py --data-folder ../data --output-folder ../data
+
+    python models_and_results.py
+
+    quarto render report/Heart_Disease.qmd --to html
+    quarto render report/Heart_Disease.qmd --to pdf
+    ```
+
+-   <div>
+
+    ### Clean up
+
+    </div>
 
 -   To shut down the container and clean up the resources, type `Cntrl` + `C` in the terminal where you launched the container, and then type `docker compose rm`To shut down the container and clean up the resources, type `Cntrl` + `C` in the terminal where you launched the container, and then type `docker compose rm`
 
