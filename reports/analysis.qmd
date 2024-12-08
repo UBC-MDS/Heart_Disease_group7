@@ -31,9 +31,13 @@ The objective of this project is to build a classification model that predicts t
 
 # Methods
 
+The Python programming language [@Python]
+and the following Python packages were used to perform the analysis:
+pandas [@pandas], altair [@altair], numpy [@numpy], scikit-learn [@scikit-learn] and etc.
+
 ## Data 
 
-The dataset is created by R. Detrano, A. Jánosi, W. Steinbrunn, M. Pfisterer, J. Schmid, S. Sandhu, K. Guppy, S. Lee, V. Froelicher and was sourced from UC Irvine's Machine Learning Repository. The original dataset consists of 920 observation and 76 attributes, however only 13 attributes were used for the project. The target variable, label, indicates the presence or absence of heart disease, with values ranging from 0 (no presence) to 4 (indicating varying levels of severity). The dataset also contains demographic, clinical, and diagnostic attributes, offering a comprehensive view of patient health metrics.
+The dataset [@heart_disease_45] is created by R. Detrano, A. Jánosi, W. Steinbrunn, M. Pfisterer, J. Schmid, S. Sandhu, K. Guppy, S. Lee, V. Froelicher and was sourced from UC Irvine's Machine Learning Repository. The original dataset consists of 920 observation and 76 attributes, however only 13 attributes were used for the project. The target variable, label, indicates the presence or absence of heart disease, with values ranging from 0 (no presence) to 4 (indicating varying levels of severity). The dataset also contains demographic, clinical, and diagnostic attributes, offering a comprehensive view of patient health metrics.
 
 Key features of the dataset include demographic indicators such as age (age in years) and sex (gender: 1 = male, 0 = female). Clinical measurements include trestbps (resting blood pressure), chol (serum cholesterol levels), thalach (maximum heart rate achieved), and oldpeak (ST depression induced by exercise). Additionally, categorical variables such as cp (chest pain type), fbs (fasting blood sugar > 120 mg/dl), restecg (resting electrocardiographic results), exang (exercise-induced angina), slope (slope of the peak exercise ST segment), ca (number of major vessels colored by fluoroscopy), and thal (heart imaging defects) provide valuable context for predicting heart disease. 
 
