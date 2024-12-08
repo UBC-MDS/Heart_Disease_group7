@@ -13,3 +13,4 @@ dependencies:
   - scipy=1.14.1
   - scikit-learn=1.2.2
   - pandera=0.20.4
+  - quarto=1.5.57

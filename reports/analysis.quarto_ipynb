@@ -1,0 +1,811 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Predicting the presence of heart disease with key health metrics and attributes\"\n",
+        "author: \"Ziming(Ethan) Fang, Lik Hang(Alex) Wong, Caroline Kahare\"\n",
+        "format:\n",
+        "  html: \n",
+        "    toc: true\n",
+        "    toc-title: \"Contents\"\n",
+        "    number-sections: true\n",
+        "    code-fold: true\n",
+        "    code-summary: \"Show Code\"\n",
+        "bibliography: references.bib\n",
+        "execute: \n",
+        "  echo: false\n",
+        "  warning: false\n",
+        "  message: false\n",
+        "editor: source\n",
+        "output-dir: docs\n",
+        "---\n",
+        "\n",
+        "\n",
+        "\n",
+        "by Ethan Fang, Caroline Kahare and Alex Wong\n",
+        "\n",
+        "\n",
+        "# Introduction \n",
+        "\n",
+        "The objective of this project is to build a classification model that predicts the presence of heart disease based on key health metrics and attributes. It aims to contribute to the understanding and early detection of heart disease, which is crucial for effective medical intervention and prevention. \n",
+        "\n",
+        "# Methods\n",
+        "\n",
+        "## Data \n",
+        "\n",
+        "The dataset is created by R. Detrano, A. Jánosi, W. Steinbrunn, M. Pfisterer, J. Schmid, S. Sandhu, K. Guppy, S. Lee, V. Froelicher and was sourced from UC Irvine's Machine Learning Repository. The original dataset consists of 920 observation and 76 attributes, however only 13 attributes were used for the project. The target variable, label, indicates the presence or absence of heart disease, with values ranging from 0 (no presence) to 4 (indicating varying levels of severity). The dataset also contains demographic, clinical, and diagnostic attributes, offering a comprehensive view of patient health metrics.\n",
+        "\n",
+        "Key features of the dataset include demographic indicators such as age (age in years) and sex (gender: 1 = male, 0 = female). Clinical measurements include trestbps (resting blood pressure), chol (serum cholesterol levels), thalach (maximum heart rate achieved), and oldpeak (ST depression induced by exercise). Additionally, categorical variables such as cp (chest pain type), fbs (fasting blood sugar > 120 mg/dl), restecg (resting electrocardiographic results), exang (exercise-induced angina), slope (slope of the peak exercise ST segment), ca (number of major vessels colored by fluoroscopy), and thal (heart imaging defects) provide valuable context for predicting heart disease. \n",
+        "\n",
+        "\n",
+        "1. **age**: Age in years  \n",
+        "2. **sex**: Sex  \n",
+        "   - `1` = Male  \n",
+        "   - `0` = Female  \n",
+        "3. **cp**: Chest pain type  \n",
+        "   - Value `1`: Typical angina  \n",
+        "   - Value `2`: Atypical angina  \n",
+        "   - Value `3`: Non-anginal pain  \n",
+        "   - Value `4`: Asymptomatic  \n",
+        "4. **trestbps**: Resting blood pressure (in mm Hg on admission to the hospital)  \n",
+        "5. **chol**: Serum cholesterol in mg/dl  \n",
+        "6. **fbs**: Fasting blood sugar (> 120 mg/dl)  \n",
+        "   - `1` = True  \n",
+        "   - `0` = False  \n",
+        "7. **restecg**: Resting electrocardiographic results  \n",
+        "   - Value `0`: Normal  \n",
+        "   - Value `1`: Having ST-T wave abnormality (T wave inversions and/or ST  \n",
+        "     elevation or depression of > 0.05 mV)  \n",
+        "   - Value `2`: Showing probable or definite left ventricular hypertrophy by  \n",
+        "     Estes' criteria  \n",
+        "8. **thalach**: Maximum heart rate achieved  \n",
+        "9. **exang**: Exercise-induced angina  \n",
+        "   - `1` = Yes  \n",
+        "   - `0` = No  \n",
+        "10. **oldpeak**: ST depression induced by exercise relative to rest  \n",
+        "11. **slope**: The slope of the peak exercise ST segment  \n",
+        "    - Value `1`: Upsloping  \n",
+        "    - Value `2`: Flat  \n",
+        "    - Value `3`: Downsloping  \n",
+        "12. **ca**: Number of major vessels (0-3) colored by fluoroscopy  \n",
+        "13. **thal**:  \n",
+        "    - `3` = Normal  \n",
+        "    - `6` = Fixed defect  \n",
+        "    - `7` = Reversible defect\n",
+        "14. **label**: \n",
+        "    - `0` = Absence \n",
+        "    - `1` = Presence \n",
+        "    - `2` = Presence\n",
+        "    - `3` = Presence\n",
+        "    - `4` = Presence\n"
+      ],
+      "id": "600e5cf5"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "# pip install deepchecks==0.18.1"
+      ],
+      "id": "80b2b52c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import altair_ally as aly\n",
+        "import altair as alt\n",
+        "import pandera as pa\n",
+        "from scipy import stats\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.preprocessing import OneHotEncoder\n",
+        "from sklearn.compose import make_column_transformer\n",
+        "from sklearn.impute import SimpleImputer\n",
+        "from sklearn.pipeline import Pipeline, make_pipeline\n",
+        "from sklearn.model_selection import train_test_split, cross_val_score\n",
+        "from sklearn.model_selection import RandomizedSearchCV, GridSearchCV\n",
+        "from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score\n",
+        "from sklearn.metrics import precision_score, recall_score, f1_score\n",
+        "from sklearn.metrics import make_scorer, roc_auc_score\n",
+        "from sklearn.compose import ColumnTransformer\n",
+        "from sklearn.linear_model import LogisticRegression\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "from sklearn.svm import SVC\n",
+        "from sklearn.tree import DecisionTreeClassifier\n",
+        "from sklearn.neighbors import KNeighborsClassifier\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from deepchecks.tabular import Dataset\n",
+        "from deepchecks.tabular.checks import FeatureLabelCorrelation, FeatureFeatureCorrelation"
+      ],
+      "id": "5e1111e6",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "columns = ['age','sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']"
+      ],
+      "id": "94acfacf",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#The script below aims at unifying multiple sources and handling inconsistencies in the datasets\n",
+        "\n",
+        "file_path_hungarian = 'data/processed.hungarian.data'\n",
+        "file_path_switzerland = 'data/processed.switzerland.data'\n",
+        "file_path_cleveland = 'data/processed.cleveland.data'\n",
+        "file_path_va = 'data/processed.va.data'\n",
+        "hungary_df = pd.read_csv(file_path_hungarian,index_col=False, names = columns)\n",
+        "swiss_df = pd.read_csv(file_path_switzerland,index_col=False, names = columns)\n",
+        "cleveland_df = pd.read_csv(file_path_cleveland,index_col=False, names = columns)\n",
+        "va_df = pd.read_csv(file_path_va,index_col=False, names = columns)"
+      ],
+      "id": "8b59862c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Data Cleaning\n"
+      ],
+      "id": "a1069c14"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| label: combined_dataframe\n",
+        "#| tbl-cap: Combined Data Frame\n",
+        "\n",
+        "# Combine the four dataset into one consolidated set \n",
+        "combined_df = pd.concat([hungary_df, swiss_df, cleveland_df, va_df], axis = 0)\n",
+        "combined_df.replace(\"?\", np.nan, inplace = True)\n",
+        "combined_df"
+      ],
+      "id": "combined_dataframe",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "## delete duplicated rows\n",
+        "#This process ensures the data is clean, well-formatted, and appropriate for analysis or modeling.\n",
+        "duplicate_index = [102,187]\n",
+        "combined_df = combined_df.drop(index=duplicate_index).reset_index(drop=True)\n",
+        "combined_df\n",
+        "\n",
+        "# Casting continuous features to float64 instead of categories \n",
+        "combined_df['trestbps'] = combined_df['trestbps'].astype('float64')\n",
+        "combined_df['chol'] = combined_df['chol'].astype('float64')\n",
+        "combined_df['thalach'] = combined_df['thalach'].astype('float64')\n",
+        "combined_df['oldpeak'] = combined_df['thalach'].astype('float64')\n",
+        "\n",
+        "# Casting label as categorical \n",
+        "combined_df['label'] = combined_df['label'].astype('category')\n",
+        "\n",
+        "# Casting as categorical \n",
+        "combined_df['cp'] = combined_df['cp'].astype('category')\n",
+        "combined_df['sex'] = combined_df['sex'].astype('category')\n",
+        "\n",
+        "# For the following features, have to first convert dtype to number first to ensure the category labels\n",
+        "# are not affected by decimals (i.e. 1.0 and 1 are not treated as different groups)\n",
+        "combined_df['exang'] = pd.to_numeric(combined_df['exang'], errors='coerce').astype('category')\n",
+        "combined_df['thal'] = pd.to_numeric(combined_df['thal'], errors='coerce').astype('category')\n",
+        "combined_df['fbs'] = pd.to_numeric(combined_df['fbs'], errors='coerce').astype('category')\n",
+        "combined_df['ca'] = pd.to_numeric(combined_df['ca'], errors='coerce').astype('category')\n",
+        "combined_df['slope'] = pd.to_numeric(combined_df['slope'], errors='coerce').astype('category')\n",
+        "combined_df['restecg'] = pd.to_numeric(combined_df['restecg'], errors='coerce').astype('category')"
+      ],
+      "id": "09b1d8c5",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Data Validation\n"
+      ],
+      "id": "e5a87cd7"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 1. Correct data file format\n",
+        "\n",
+        "file_path = [file_path_hungarian, file_path_switzerland, file_path_cleveland, file_path_va]\n",
+        "if False in [path.endswith('.data') for path in file_path]:\n",
+        "    print(\"Warning: The file extension is not .data\")\n",
+        "else:\n",
+        "    print(\"File is in the expected format.\")"
+      ],
+      "id": "8684d5e6",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 2. Correct column names\n",
+        "#The script ensures that the column names in the combined_df DataFrame match a predefined list of expected column names (\n",
+        "\n",
+        "expected_names = set(columns)\n",
+        "actual_names = set(combined_df.columns)\n",
+        "if expected_names != actual_names:\n",
+        "    print(f\"Warning: Column names do not match. Expected: {columns}, Found: {combined_df.columns.tolist()}\")\n",
+        "else:\n",
+        "    print(\"Column names are correct.\")"
+      ],
+      "id": "0e60360c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 3. No empty observations\n",
+        "#This script checks whether the files specified by the paths in the list file_path all have the .data file extension\n",
+        "\n",
+        "empty_obs_schema = pa.DataFrameSchema(\n",
+        "    checks = [\n",
+        "        pa.Check(lambda df: ~(df.isna().all(axis = 1)).any(), error = \"Empty rows found.\")\n",
+        "    ]\n",
+        ")\n",
+        "try:\n",
+        "    empty_obs_schema.validate(combined_df)\n",
+        "    print(\"No missing row found.\")\n",
+        "except pa.errors.SchemaError as a:\n",
+        "    print(f\"Warning: There are {combined_df.isna().sum().sum()} missing values in dataset.\")"
+      ],
+      "id": "6e13ee82",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 4. Missingness not beyond expected threshold\n",
+        "#The script checks each column in combined_df to see if the proportion of missing values exceeds 5%. If it does, a warning is printed. Otherwise, it confirms that the column's missing values are within acceptable limits.\n",
+        "\n",
+        "threshold = 0.05\n",
+        "missing_prop = combined_df.isna().mean()\n",
+        "for col, prop in missing_prop.items():\n",
+        "    if prop > threshold:\n",
+        "        print(f\"Warning: There're too many missing values in column '{col}'.\")\n",
+        "    else:\n",
+        "        print(f\"Column '{col}' passed the test of missingness.\")"
+      ],
+      "id": "4d431a8a",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 5. Correct data types in each column\n",
+        "#This script uses the pandera library to validate the combined_df DataFrame's columns against a predefined schema (column_type_schema).\n",
+        "#If the columns match the expected data types, it prints a success message. If any columns don't match the expected types,\n",
+        "#it prints a warning with details about the mismatch\n",
+        "\n",
+        "column_type_schema = pa.DataFrameSchema(\n",
+        "    {\n",
+        "        \"age\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"sex\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"cp\": pa.Column(pa.String, nullable = True),\n",
+        "        \"trestbps\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"chol\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"fbs\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"restecg\": pa.Column(pa.String, nullable = True),\n",
+        "        \"thalach\": pa.Column(pa.Int, nullable = True),\n",
+        "        \"exang\": pa.Column(pa.String, nullable = True),\n",
+        "        \"oldpeak\": pa.Column(pa.Float, nullable = True),\n",
+        "        \"slope\": pa.Column(pa.String, nullable = True),\n",
+        "        \"ca\": pa.Column(pa.Float, nullable = True),\n",
+        "        \"thal\": pa.Column(pa.String, nullable = True),\n",
+        "        \"label\": pa.Column(pa.Int, nullable = True)\n",
+        "    }    \n",
+        ")\n",
+        "try:\n",
+        "    column_type_schema.validate(combined_df)\n",
+        "    print(\"All columns have correct data types.\")\n",
+        "except pa.errors.SchemaError as e:\n",
+        "    print(f\"Warning: Validation failed: {e}\")"
+      ],
+      "id": "9ab7d69c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 6. No duplicate observations\n",
+        "#This script uses the pandera library to validate the combined_df DataFrame for duplicate rows.\n",
+        "#If duplicates are found, it raises a warning and displays the duplicate rows. If no duplicates are found, it confirms that there are no duplicates.\n",
+        "\n",
+        "duplicate_obs_schema = pa.DataFrameSchema(\n",
+        "    checks=[\n",
+        "        pa.Check(lambda df: ~df.duplicated().any(), error=\"There're duplicate rows\")\n",
+        "    ]\n",
+        ")\n",
+        "try:\n",
+        "    duplicate_obs_schema.validate(combined_df)\n",
+        "    print(\"No duplicate rows found.\")\n",
+        "except pa.errors.SchemaError as e:\n",
+        "    duplicate_rows = combined_df[combined_df.duplicated(keep=False)]\n",
+        "    print(f\"Warning: There're duplicate rows: \\n{duplicate_rows}.\")"
+      ],
+      "id": "001b8ef1",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 7. No outlier or anomalous values\n",
+        "#This script uses the pandera library to validate the values in the combined_df DataFrame against a defined schema (values_schema) to ensure the values meet specific criteria (e.g., value ranges, membership in predefined sets).\n",
+        "#It performs this validation after converting the values in combined_df to float (if not NaN) to facilitate numeric checks.\n",
+        "\n",
+        "values_schema = pa.DataFrameSchema({\n",
+        "    \"age\": pa.Column(float, pa.Check.between(0, 120), nullable=True),\n",
+        "    \"sex\": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), \n",
+        "    \"cp\": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0, 4.0]), nullable=True), \n",
+        "    \"trestbps\": pa.Column(float, pa.Check.between(0, 220), nullable=True),\n",
+        "    \"chol\": pa.Column(float, pa.Check.between(0, 800), nullable=True), \n",
+        "    \"fbs\": pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True), \n",
+        "    \"restecg\": pa.Column(float, pa.Check.isin([0.0, 1.0, 2.0]), nullable=True),  \n",
+        "    \"thalach\": pa.Column(float, pa.Check.between(50, 240), nullable=True),  \n",
+        "    \"exang\":  pa.Column(float, pa.Check.isin([0.0, 1.0]), nullable=True),  \n",
+        "    \"oldpeak\": pa.Column(float, pa.Check.between(0.0, 250), nullable=True),  \n",
+        "    \"slope\": pa.Column(float, pa.Check.isin([1.0, 2.0, 3.0]), nullable=True),  \n",
+        "    \"ca\": pa.Column(float, pa.Check.between(0, 4), nullable=True), \n",
+        "    \"thal\": pa.Column(float, pa.Check.isin([3.0, 6.0, 7.0]), nullable=True),  \n",
+        "    \"label\": pa.Column(float, pa.Check.isin([0, 1, 2, 3, 4]), nullable=True),  \n",
+        "})\n",
+        "replicate_df = combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x)\n",
+        "try:\n",
+        "    values_schema.validate(replicate_df, lazy = True)\n",
+        "    print(\"No outlier or anomalous value found.\")\n",
+        "except pa.errors.SchemaErrors as e:\n",
+        "    print(f\"Warning: There're outlier or anomalous values.\")"
+      ],
+      "id": "2da5de73",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "values_schema.validate(combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x), lazy = True)"
+      ],
+      "id": "12ef9879",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 8. There's no categorical value in this dataframe."
+      ],
+      "id": "00176ad7",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 9. Target/response variable follows expected distribution\n",
+        "#This check is useful for understanding the distribution of the target variable (label\n",
+        "proportions = combined_df.label.value_counts(normalize=True)\n",
+        "print(\"Class proportions are\", proportions)\n",
+        "print(\"Class proportions are as expected.\")"
+      ],
+      "id": "f01adc1a",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 10. No anomalous correlations between target variable and features variables\n",
+        "\n",
+        "categorical_features = ['sex', 'cp', 'fbs', 'restecg', 'exang', 'slope', 'ca', 'thal']\n",
+        "ds = Dataset(combined_df, label='label', cat_features=categorical_features)\n",
+        "\n",
+        "check_feat_lab_corr = FeatureLabelCorrelation().add_condition_feature_pps_less_than(0.9)\n",
+        "check_feat_lab_corr_result = check_feat_lab_corr.run(dataset=ds)\n",
+        "check_feat_lab_corr.run(dataset=ds).show()\n",
+        "if not check_feat_lab_corr_result.passed_conditions():\n",
+        "    raise ValueError(\"The correlation between target and features variables exceeds the threshold.\")\n",
+        "else:\n",
+        "    print(\"Everything is fine.\")"
+      ],
+      "id": "7c9c06f7",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| include: false\n",
+        "## --- 11. No anomalous correlations between features variables\n",
+        "#This code performs a Feature-Feature Correlation check to ensure that there are no anomalous or excessively high correlations\n",
+        "#(above a threshold of 0.9) between feature variables in a dataset.\n",
+        "\n",
+        "check_feat_feat_corr = FeatureFeatureCorrelation(threshold=0.9)\n",
+        "check_feat_feat_corr_result = check_feat_feat_corr.run(dataset=ds)\n",
+        "check_feat_feat_corr.run(dataset=ds).show()\n",
+        "\n",
+        "if not check_feat_feat_corr_result.passed_conditions():\n",
+        "    raise ValueError(\"The correlation between features variables exceeds the threshold.\")\n",
+        "else:\n",
+        "    print(\"Everything is fine.\")"
+      ],
+      "id": "092e6469",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "----------------------------------\n",
+        "\n",
+        "## Exploratory data analysis(EDA)\n",
+        "\n",
+        "### Key findings\n",
+        "\n",
+        "- Patients with no heart disease exhibits on average higher ST depression induced by exercise relative to rest, higher maximum heart rate and lower serum cholestorel. \n",
+        "\n",
+        "- Heart disease is more common among patients over 55. \n",
+        "\n",
+        "- Patients with heart disease are more likely to experience asymptomatic chest pains.\n",
+        "\n",
+        "- Males appear to be more susceptible to heart disease. \n",
+        "\n",
+        "- Patients without heart disease tend to have lower fasting blood sugar when compared to the positive group.\n"
+      ],
+      "id": "7fa394ef"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "train_df, test_df = train_test_split(combined_df, test_size=0.3, random_state=123)"
+      ],
+      "id": "407d7f95",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "fig-width": 8,
+        "fig-height": 4
+      },
+      "source": [
+        "#| label: numerical_chart\n",
+        "#| fig-cap: This shows the distribution of numerical variables\n",
+        "\n",
+        "aly.alt.data_transformers.enable('vegafusion')\n",
+        "aly.dist(train_df, color='label')"
+      ],
+      "id": "numerical_chart",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "fig-width": 4,
+        "fig-height": 15
+      },
+      "source": [
+        "#| label: categorical_chart\n",
+        "#| fig-cap: This shows the distribution of categorical variables\n",
+        "\n",
+        "aly.dist(train_df, dtype = 'category', color = 'label')"
+      ],
+      "id": "categorical_chart",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Features pre-processing \n"
+      ],
+      "id": "9fe70a79"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "X_train = train_df.drop(columns=[\"label\"])\n",
+        "X_test = test_df.drop(columns=[\"label\"])\n",
+        "y_train = train_df[\"label\"]\n",
+        "y_test = test_df[\"label\"]"
+      ],
+      "id": "f168db3a",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "numeric_features = ['age', 'trestbps', 'chol', 'thalach', 'oldpeak'] # standard scaling for numerical features\n",
+        "categorical_features = ['cp', 'restecg'] # onehot encoding for categorical features with > 2 classes\n",
+        "binary_features = ['sex', 'exang', 'fbs'] # simple imputing on the binary features\n",
+        "drop_features = ['thal', 'ca', 'slope'] # dropping features with signifcant NaN values "
+      ],
+      "id": "d5973927",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "numeric_transformer_pipe = make_pipeline(SimpleImputer(strategy = 'median'), StandardScaler())\n",
+        "categorical_transfomer_pipe = make_pipeline(SimpleImputer(strategy = 'most_frequent'), OneHotEncoder(drop = 'if_binary', sparse_output = False)) \n",
+        "imputer = SimpleImputer(strategy = 'most_frequent')"
+      ],
+      "id": "16f03320",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "preprocessor = make_column_transformer(\n",
+        "    (numeric_transformer_pipe, numeric_features),\n",
+        "    (categorical_transfomer_pipe, categorical_features),\n",
+        "    (imputer, binary_features),\n",
+        "    (\"drop\", drop_features)\n",
+        ")"
+      ],
+      "id": "1520cb2a",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "X_train_transformed = preprocessor.fit_transform(X_train)\n",
+        "X_test_transformed = preprocessor.fit_transform(X_test)"
+      ],
+      "id": "7afb3214",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "col_names = ( \n",
+        "    numeric_features +\n",
+        "    preprocessor.named_transformers_['pipeline-2'].get_feature_names_out().tolist() + \n",
+        "    binary_features\n",
+        ")"
+      ],
+      "id": "82cbc47c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#| label: x-train-transformed\n",
+        "#| tbl-cap: Transformed X Train Data Frame\n",
+        "X_train_transformed = pd.DataFrame(X_train_transformed, columns = col_names)\n",
+        "X_test_transformed = pd.DataFrame(X_test_transformed, columns = col_names)\n",
+        "X_train_transformed "
+      ],
+      "id": "x-train-transformed",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "## Models and Hyperparameters\n",
+        "### Summary\n",
+        "\n",
+        "- Various machine learning models were tested and optimized using hyperparameter tuning to identify the best-performing model.\n",
+        "- Randomized Search CV was used to perform hyperparameter optimization for each model. Key parameters tuned include:\n",
+        "   - Logistic Regression: Regularization strength(C), Solver(liblinear, lbfgs).\n",
+        "   - Decision Tree: Maximum depth, Minimum samples per split.\n",
+        "   - SVM: Regularization strength(C), Kernel type(linear, rbf).\n",
+        "   - KNN: Number of neighbours, Weight type(uniform, distance).\n",
+        "\n",
+        "- Results:\n",
+        "\n",
+        "    As shown in Text @model_results, KNN performs the best.\n",
+        "\n",
+        "### Conclusion\n",
+        "\n",
+        "- The K-Nearest Neighbors (KNN) model emerged as the best-performing classifier based on accuracy and weighted F1-score. Despite moderate overall performance, it provided reasonable balance across classes compared to other models.This study demonstrates the potential of leveraging machine learning techniques for predicting heart disease but also highlights the challenges posed by multi-class classification and limited data quality.\n"
+      ],
+      "id": "ff2d807e"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#importing libraries\n",
+        "\n",
+        "import warnings\n",
+        "warnings.filterwarnings('ignore')\n",
+        "\n",
+        "#pio.templates.default = \"plotly_white\"\n",
+        "\n",
+        "#%matplotlib inline\n",
+        "\n",
+        "#Models for scikit learn\n",
+        "\n",
+        "#Model Evaluations"
+      ],
+      "id": "1d91ce8c",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "#The models dictionary holds the classifier objects for different algorithms.\n",
+        "#The param_distributions dictionary specifies the ranges and values for hyperparameters to be explored during optimization.\n",
+        "#This setup allows for an efficient search over multiple hyperparameters and algorithms to find the best configuration for the task at hand.\n",
+        "\n",
+        "models = {\n",
+        "    'Logistic Regression': LogisticRegression(random_state = 123, max_iter=1000),\n",
+        "    'Decision Tree': DecisionTreeClassifier(),\n",
+        "    'Support Vector Machine': SVC(random_state = 123, probability=True),\n",
+        "    'K-Nearest Neighbors': KNeighborsClassifier()\n",
+        "}\n",
+        "\n",
+        "param_distributions = {\n",
+        "    'Logistic Regression': {\n",
+        "        'classifier__C': stats.loguniform(1e-3, 1e3),\n",
+        "        'classifier__solver': ['liblinear', 'lbfgs']\n",
+        "    },\n",
+        "    'Decision Tree': {\n",
+        "        'classifier__max_depth': [3, 5, 10],\n",
+        "        'classifier__min_samples_split': stats.randint(2, 20)\n",
+        "    },\n",
+        "    'Support Vector Machine': {\n",
+        "        'classifier__C': stats.loguniform(1e-2, 1e2),\n",
+        "        'classifier__kernel': ['linear', 'rbf']\n",
+        "    },\n",
+        "    'K-Nearest Neighbors': {\n",
+        "        'classifier__n_neighbors': stats.randint(3, 20),\n",
+        "        'classifier__weights': ['uniform', 'distance']\n",
+        "    }\n",
+        "}"
+      ],
+      "id": "08ff2800",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "caption": "The Results of Models Evaluation"
+      },
+      "source": [
+        "#| label: model_results\n",
+        "#| echo: false\n",
+        "#| output: markdown\n",
+        "\n",
+        "#RandomizedSearchCV allows for searching over a large hyperparameter space by sampling random values,\n",
+        "#making it efficient compared to grid search.\n",
+        "\n",
+        "#Classification reports and confusion matrices provide insight into model performance,\n",
+        "#including how well the model distinguishes between classes.\n",
+        "\n",
+        "best_models = {}\n",
+        "\n",
+        "for model_name, model in models.items():\n",
+        "    print(f\"Tuning hyperparameters for {model_name} using RandomizedSearchCV...\")\n",
+        "    \n",
+        "    clf = Pipeline(steps=[('classifier', model)])\n",
+        "    \n",
+        "    random_search = RandomizedSearchCV(\n",
+        "        estimator=clf,\n",
+        "        param_distributions=param_distributions[model_name],\n",
+        "        scoring=make_scorer(roc_auc_score, needs_proba=True),\n",
+        "        n_iter=10, \n",
+        "        cv=5,\n",
+        "        random_state=42\n",
+        "    )\n",
+        "    \n",
+        "    random_search.fit(X_train_transformed, y_train)\n",
+        "    \n",
+        "    best_models[model_name] = random_search.best_estimator_\n",
+        "    \n",
+        "    print(f\"Best parameters for {model_name}: {random_search.best_params_}\")\n",
+        "    print(\"-\" * 40)\n",
+        "\n",
+        "for model_name, model in best_models.items():\n",
+        "    print(f\"Evaluating {model_name} on test set...\")\n",
+        "    y_pred = model.predict(X_test_transformed)\n",
+        "    \n",
+        "    print(\"Classification Report:\")\n",
+        "    print(classification_report(y_test, y_pred))\n",
+        "    print(\"Confusion Matrix:\")\n",
+        "    print(confusion_matrix(y_test, y_pred))\n",
+        "    print(\"-\" * 40)"
+      ],
+      "id": "model_results",
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# Reference \n",
+        "\n",
+        "```\n",
+        "{bibliography}\n",
+        "```\n"
+      ],
+      "id": "5e2ebd79"
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "/Users/alexwong/miniforge3/share/jupyter/kernels/python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}
