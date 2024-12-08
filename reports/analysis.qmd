@@ -14,11 +14,15 @@ execute:
   warning: false
   message: false
 editor: source
+output: 
+  html:
+    toc: true
+    number-sections: true
+  pdf:
+    toc: true
+    number-sections: true
 output-dir: docs
 ---
-
-
-by Ethan Fang, Caroline Kahare and Alex Wong
 
 
 # Introduction 
@@ -76,7 +80,7 @@ Key features of the dataset include demographic indicators such as age (age in y
     - `4` = Presence
 
 ```{python}
-# pip install deepchecks==0.18.1
+# pip install deepchecks==0.18.1 altair_ally>=0.1.1
 ```
 
 ```{python}
@@ -114,10 +118,10 @@ columns = ['age','sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 'thalach', '
 ```{python}
 #The script below aims at unifying multiple sources and handling inconsistencies in the datasets
 
-file_path_hungarian = 'data/processed.hungarian.data'
-file_path_switzerland = 'data/processed.switzerland.data'
-file_path_cleveland = 'data/processed.cleveland.data'
-file_path_va = 'data/processed.va.data'
+file_path_hungarian = '../data/processed.hungarian.data'
+file_path_switzerland = '../data/processed.switzerland.data'
+file_path_cleveland = '../data/processed.cleveland.data'
+file_path_va = '../data/processed.va.data'
 hungary_df = pd.read_csv(file_path_hungarian,index_col=False, names = columns)
 swiss_df = pd.read_csv(file_path_switzerland,index_col=False, names = columns)
 cleveland_df = pd.read_csv(file_path_cleveland,index_col=False, names = columns)
@@ -127,7 +131,7 @@ va_df = pd.read_csv(file_path_va,index_col=False, names = columns)
 ## Data Cleaning
 
 ```{python}
-#| label: combined_dataframe
+#| label: tbl-combined_dataframe
 #| tbl-cap: "Combined Data Frame"
 
 # Combine the four dataset into one consolidated set 
@@ -167,6 +171,8 @@ combined_df['restecg'] = pd.to_numeric(combined_df['restecg'], errors='coerce').
 ```
 
 ## Data Validation
+
+Our data passed all data validation steps besides duplicate rows check, which had been modified accordingly later.
 
 ```{python}
 #| include: false
@@ -305,8 +311,7 @@ except pa.errors.SchemaErrors as e:
 ```
 
 ```{python}
-#| include: false
-values_schema.validate(combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x), lazy = True)
+#values_schema.validate(combined_df.applymap(lambda x: float(x) if pd.notnull(x) else x), lazy = True)
 ```
 
 ```{python}
@@ -357,9 +362,9 @@ else:
 
 ----------------------------------
 
-## Exploratory data analysis(EDA)
+## Exploratory data analysis
 
-### Key findings
+#### Key findings
 
 - Patients with no heart disease exhibits on average higher ST depression induced by exercise relative to rest, higher maximum heart rate and lower serum cholestorel. 
 
@@ -376,21 +381,18 @@ train_df, test_df = train_test_split(combined_df, test_size=0.3, random_state=12
 ```
 
 ```{python}
-#| label: numerical_chart
+#| label: fig-numerical_chart
 #| fig-cap: "This shows the distribution of numerical variables"
 #| fig-width: 8
 #| fig-height: 4
-
-aly.alt.data_transformers.enable('vegafusion')
 aly.dist(train_df, color='label')
 ```
 
 ```{python}
-#| label: categorical_chart
+#| label: fig-categorical_chart
 #| fig-cap: "This shows the distribution of categorical variables"
 #| fig-width: 4
 #| fig-height: 15
-
 aly.dist(train_df, dtype = 'category', color = 'label')
 ```
 
@@ -439,7 +441,12 @@ col_names = (
 ```
 
 ```{python}
-#| label: x-train-transformed
+preprocessor.named_transformers_
+```
+
+
+```{python}
+#| label: tbl-x_train_transformed
 #| tbl-cap: "Transformed X Train Data Frame"
 X_train_transformed = pd.DataFrame(X_train_transformed, columns = col_names)
 X_test_transformed = pd.DataFrame(X_test_transformed, columns = col_names)
@@ -458,7 +465,7 @@ X_train_transformed
 
 - Results:
 
-    As shown in Text @model_results, KNN performs the best.
+    KNN performs the best.
 
 ### Conclusion
 
@@ -494,20 +501,20 @@ models = {
 
 param_distributions = {
     'Logistic Regression': {
-        'classifier__C': stats.loguniform(1e-3, 1e3),
-        'classifier__solver': ['liblinear', 'lbfgs']
+        'logisticregression__C': stats.loguniform(1e-3, 1e3),
+        'logisticregression__solver': ['liblinear', 'lbfgs']
     },
     'Decision Tree': {
-        'classifier__max_depth': [3, 5, 10],
-        'classifier__min_samples_split': stats.randint(2, 20)
+        'decisiontreeclassifier__max_depth': [3, 5, 10],
+        'decisiontreeclassifier__min_samples_split': stats.randint(2, 20)
     },
     'Support Vector Machine': {
-        'classifier__C': stats.loguniform(1e-2, 1e2),
-        'classifier__kernel': ['linear', 'rbf']
+        'svc__C': stats.loguniform(1e-2, 1e2),
+        'svc__kernel': ['linear', 'rbf']
     },
     'K-Nearest Neighbors': {
-        'classifier__n_neighbors': stats.randint(3, 20),
-        'classifier__weights': ['uniform', 'distance']
+        'kneighborsclassifier__n_neighbors': stats.randint(3, 20),
+        'kneighborsclassifier__weights': ['uniform', 'distance']
     }
 }
 ```
@@ -517,7 +524,7 @@ param_distributions = {
 #| echo: false
 #| output: markdown
 #| caption: "The Results of Models Evaluation"
-
+#| 
 #RandomizedSearchCV allows for searching over a large hyperparameter space by sampling random values,
 #making it efficient compared to grid search.
 
@@ -529,18 +536,18 @@ best_models = {}
 for model_name, model in models.items():
     print(f"Tuning hyperparameters for {model_name} using RandomizedSearchCV...")
     
-    clf = Pipeline(steps=[('classifier', model)])
+    clf_pipe = make_pipeline(preprocessor, model)
     
     random_search = RandomizedSearchCV(
-        estimator=clf,
+        estimator=clf_pipe,
         param_distributions=param_distributions[model_name],
-        scoring=make_scorer(roc_auc_score, needs_proba=True),
+        scoring="accuracy",
         n_iter=10, 
         cv=5,
-        random_state=42
+        random_state=123
     )
     
-    random_search.fit(X_train_transformed, y_train)
+    random_search.fit(X_train, y_train)
     
     best_models[model_name] = random_search.best_estimator_
     
@@ -549,13 +556,14 @@ for model_name, model in models.items():
 
 for model_name, model in best_models.items():
     print(f"Evaluating {model_name} on test set...")
-    y_pred = model.predict(X_test_transformed)
-    
+    y_pred = model.predict(X_test)
+
+    report = classification_report(y_test, y_pred,zero_division=0)
     print("Classification Report:")
-    print(classification_report(y_test, y_pred))
-    print("Confusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    print("-" * 40)
+    print(report)
+    output_file = f"../results/classification_report_{model_name}.txt"
+    with open(output_file, "w") as f:
+        f.write(report)
 ```
 
 # Reference 
@@ -563,6 +571,4 @@ for model_name, model in best_models.items():
 ```
 {bibliography}
 ```
-
-
 
