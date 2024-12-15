@@ -4,6 +4,11 @@ import click
 import pandera as pa
 from deepchecks.tabular import Dataset
 from deepchecks.tabular.checks import FeatureLabelCorrelation, FeatureFeatureCorrelation
+import sys 
+import os
+current_dir = os.getcwd()
+sys.path.append(current_dir)
+from src.validate_data import check_empty_obs, check_missingness, check_duplicate_obs
 
 @click.command()
 @click.option('--input', type=str)
@@ -40,25 +45,12 @@ def main(input):
     ## --- 3. No empty observations
     #This script checks whether the files specified by the paths in the list file_path all have the .data file extension
 
-    empty_obs_schema = pa.DataFrameSchema(
-    checks = [pa.Check(lambda df: ~(df.isna().all(axis = 1)).any(), error = "Empty rows found.")]
-    )
-    try:
-        empty_obs_schema.validate(combined_df)
-        print("No missing row found.")
-    except pa.errors.SchemaError as a:
-        print(f"Warning: There are {combined_df.isna().sum().sum()} missing values in dataset.")
+    check_empty_obs(combined_df)
 
     ## --- 4. Missingness not beyond expected threshold
     #The script checks each column in combined_df to see if the proportion of missing values exceeds 5%. If it does, a warning is printed. Otherwise, it confirms that the column's missing values are within acceptable limits.
 
-    threshold = 0.05
-    missing_prop = combined_df.isna().mean()
-    for col, prop in missing_prop.items():
-        if prop > threshold:
-            print(f"Warning: There're too many missing values in column '{col}'.")
-        else:
-            print(f"Column '{col}' passed the test of missingness.")
+    check_missingness(combined_df)
 
     ## --- 5. Correct data types in each column
     #This script uses the pandera library to validate the combined_df DataFrame's columns against a predefined schema (column_type_schema).
@@ -93,17 +85,7 @@ def main(input):
     #This script uses the pandera library to validate the combined_df DataFrame for duplicate rows.
     #If duplicates are found, it raises a warning and displays the duplicate rows. If no duplicates are found, it confirms that there are no duplicates.
 
-    duplicate_obs_schema = pa.DataFrameSchema(
-        checks=[
-            pa.Check(lambda df: ~df.duplicated().any(), error="There're duplicate rows")
-        ]
-    )
-    try:
-        duplicate_obs_schema.validate(combined_df)
-        print("No duplicate rows found.")
-    except pa.errors.SchemaError as e:
-        duplicate_rows = combined_df[combined_df.duplicated(keep=False)]
-        print(f"Warning: There're duplicate rows: \n{duplicate_rows}.")
+    check_duplicate_obs(combined_df)
     
     ## --- 7. No outlier or anomalous values
     #This script uses the pandera library to validate the values in the combined_df DataFrame against a defined schema (values_schema) to ensure the values meet specific criteria (e.g., value ranges, membership in predefined sets).
