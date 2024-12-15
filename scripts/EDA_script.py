@@ -8,7 +8,7 @@ import click
 
 def main(): 
 
-    combined_df = pd.read_csv('../data/combined_df_clean.csv')
+    combined_df = pd.read_csv('data/combined_df_clean.csv')
 
     #same data cleaning codes
     combined_df['trestbps'] = combined_df['trestbps'].astype('float64')
@@ -35,13 +35,13 @@ def main():
     train_df, test_df = train_test_split(combined_df, test_size=0.3, random_state=123)
 
     numerical_chart = aly.dist(train_df, color='label')
-    numerical_chart.save('../results/numerical_chart.png', format='png')
+    numerical_chart.save('results/numerical_chart.png', format='png')
 
     categorical_chart = aly.dist(train_df, dtype = 'category', color = 'label')
-    categorical_chart.save('../results/categorical_chart.png', format='png')
+    categorical_chart.save('results/categorical_chart.png', format='png')
 
-    train_df.to_csv('../data/train_df.csv')
-    test_df.to_csv('../data/test_df.csv')
+    train_df.to_csv('data/train_df.csv')
+    test_df.to_csv('data/test_df.csv')
 
 # call main function 
 if __name__ == "__main__":
