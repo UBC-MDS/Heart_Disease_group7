@@ -1,5 +1,10 @@
 import pandas as pd
 import click
+import sys 
+import os
+current_dir = os.getcwd()
+sys.path.append(current_dir)
+from src.combine_load_data import combine_load_data
 
 def combine_files(output_file):
     file_paths = [
@@ -11,11 +16,7 @@ def combine_files(output_file):
     columns = ['age', 'sex', 'cp', 'trestbps', 'chol', 'fbs', 'restecg', 
                'thalach', 'exang', 'oldpeak', 'slope', 'ca', 'thal', 'label']
     
-    #read file into dataframes
-    dataframes = [pd.read_csv(fp, index_col=False, names=columns) for fp in file_paths]
-    
-    #put all the dataframes into one
-    combined_df = pd.concat(dataframes, ignore_index=True)
+    combined_df = combine_load_data(file_paths, columns)
     
     #save combined df
     combined_df.to_csv(output_file, index=False)
