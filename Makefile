@@ -42,3 +42,4 @@ clean:
           data/y_test.csv \
           data/y_train.csv \
           reports/analysis.html
+          reports/analysis.html
