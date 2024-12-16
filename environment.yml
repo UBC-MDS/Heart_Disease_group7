@@ -14,3 +14,5 @@ dependencies:
   - scikit-learn=1.2.2
   - pandera=0.20.4
   - quarto=1.5.57
+  - make=4.4.1
+  - pytest=8.3.4
