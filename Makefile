@@ -36,12 +36,10 @@ clean:
           results/categorical_chart.png \
           data/processed_X_test.csv \
           data/processed_X_train.csv \
+          data/preprocessor.pkl \
           data/x_train.csv \
           data/x_test.csv \
           data/y_test.csv \
           data/y_train.csv \
           reports/analysis.html
-
-
-
- 
+          reports/analysis.html

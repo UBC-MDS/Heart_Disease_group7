@@ -18,6 +18,11 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 import pickle
+import sys 
+import os
+current_dir = os.getcwd()
+sys.path.append(current_dir)
+from src.models_fit_and_result_output import models_fit_and_result_output
 
 @click.command()
 @click.option('--output-file-path', type=str, help='Path to the output results file', default="results/model_evaluation_results.txt")
@@ -36,74 +41,8 @@ def main(output_file_path, seed):
     y_test = y_test['label']
     preprocessor = pickle.load(open('../data/preprocessor.pkl', "rb"))
     
-    
-    np.random.seed(seed)
-    models = {
-        'Logistic Regression': LogisticRegression(random_state = 123, max_iter=1000),
-        'Decision Tree': DecisionTreeClassifier(),
-        'Support Vector Machine': SVC(random_state = 123, probability=True),
-        'K-Nearest Neighbors': KNeighborsClassifier()
-    }
-    
-    param_distributions = {
-        'Logistic Regression': {
-            'logisticregression__C': stats.loguniform(1e-3, 1e3),
-            'logisticregression__solver': ['liblinear', 'lbfgs']
-        },
-        'Decision Tree': {
-            'decisiontreeclassifier__max_depth': [3, 5, 10],
-            'decisiontreeclassifier__min_samples_split': stats.randint(2, 20)
-        },
-        'Support Vector Machine': {
-            'svc__C': stats.loguniform(1e-2, 1e2),
-            'svc__kernel': ['linear', 'rbf']
-        },
-        'K-Nearest Neighbors': {
-            'kneighborsclassifier__n_neighbors': stats.randint(3, 20),
-            'kneighborsclassifier__weights': ['uniform', 'distance']
-        }
-    }
-    
-    #RandomizedSearchCV allows for searching over a large hyperparameter space by sampling random values,
-    #making it efficient compared to grid search.
-    
-    #Classification reports and confusion matrices provide insight into model performance,
-    #including how well the model distinguishes between classes.
-    best_models = {}
-
-    best_models = {}
-    
-    for model_name, model in models.items():
-        print(f"Tuning hyperparameters for {model_name} using RandomizedSearchCV...")
-        
-        clf_pipe = make_pipeline(preprocessor, model)
-        
-        random_search = RandomizedSearchCV(
-            estimator=clf_pipe,
-            param_distributions=param_distributions[model_name],
-            scoring="accuracy",
-            n_iter=10, 
-            cv=5,
-            random_state=seed
-        )
-        
-        random_search.fit(X_train, y_train)
-        
-        best_models[model_name] = random_search.best_estimator_
-        
-        print(f"Best parameters for {model_name}: {random_search.best_params_}")
-        print("-" * 40)
-    
-    for model_name, model in best_models.items():
-        print(f"Evaluating {model_name} on test set...")
-        y_pred = model.predict(X_test)
-        
-        report = classification_report(y_test, y_pred,zero_division=0)
-        print("Classification Report:")
-        print(report)
-        output_file = f"../results/classification_report_{model_name}.txt"
-        with open(output_file, "w") as f:
-            f.write(report)
+    output_file_dir = "results"
+    models_fit_and_result_output(preprocessor, X_train, y_train, X_test, y_test, output_file_dir,seed=123)
 
 if __name__ == '__main__':
     main()
