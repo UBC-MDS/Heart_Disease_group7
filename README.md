@@ -90,7 +90,7 @@ Use the same `docker compose up` command as described in the above Running th
 
 ## License
 
-The code of this project licensed under the terms of the MIT license.
+The code of this project licensed under the terms of the MIT license. [MIT License](https://opensource.org/license/MIT){.uri}
 
 ## References
 
