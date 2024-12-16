@@ -31,12 +31,18 @@ analysis to make your repo cleaner.
     repository is more organized and easier to navigate. This cleanup
     improves the overall clarity and usability of the project
 
+-   Commit Link :
+    <https://github.com/UBC-MDS/Heart_Disease_group7/commit/3e405aa180ce33dca45ac687ae93c765e5e31407>
+
 **Review 2**
 
 This is more minor, but it would be nice to have a link in the license
 section of the README.
 
 -   Response : A link have been added to the link session
+
+-   Commit Link :[
+    https://github.com/UBC-MDS/Heart_Disease_group7/commit/1656e71214ae58d61830e137f8f4b4e29ab5f998](https://github.com/UBC-MDS/Heart_Disease_group7/commit/1656e71214ae58d61830e137f8f4b4e29ab5f998)
 
 **Review 3**
 
@@ -53,6 +59,9 @@ instructions.
     and accurate for all users. The updated instructions can now be
     followed without confusion or errors. A screenshot has been added.
 
+-   Commit Link
+    :<https://github.com/UBC-MDS/Heart_Disease_group7/commit/94808734f3a5c3aa0aaa789fab41a07ee78f81e2>
+
 **Review 4**
 
 It looks like the README.md's references section is written in the wrong
@@ -63,3 +72,6 @@ markdown format.
 -   Response : We have now reformatted the references into a standard
     markdown format, making them more readable and appropriate for the
     README.md.
+
+-   Commit Link :
+    <https://github.com/UBC-MDS/Heart_Disease_group7/commit/3e405aa180ce33dca45ac687ae93c765e5e31407>
